@@ -1,0 +1,167 @@
+<!-- 重点参数：iconStyle, iconLabel -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <!-- 原始地址：http://webapi.amap.com/ui/1.0/ui/overlay/SimpleMarker/examples/index.html -->
+    <!-- <base
+      href="http://webapi.amap.com/ui/1.0/ui/overlay/SimpleMarker/examples/"
+    /> -->
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1.0, user-scalable=no, width=device-width"
+    />
+    <title>内置样式</title>
+    <style>
+      html,
+      body,
+      #container {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+      }
+      .main {
+        display: flex;
+      }
+      .list {
+        width: 200px;
+      }
+      li.active {
+        color: blue;
+      }
+      #container {
+        width: 100%;
+        height: 900px;
+      }
+      .amap-marker-label {
+        font-size: 13px;
+        border: 1px solid orange;
+        background: #fff;
+        border-radius: 10px 0 0 0;
+        color: #690441;
+      }
+    </style>
+    <script src="./data.js"></script>
+  </head>
+
+  <body>
+    <div class="main">
+      <div class="list">
+        <ul id="master"></ul>
+      </div>
+      <div id="container"></div>
+    </div>
+    <script
+      type="text/javascript"
+      src="http://webapi.amap.com/maps?v=1.4.15&key=146f101e824accd6956eeec4937c1a05"
+    ></script>
+    <!-- UI组件库 1.0 -->
+    <script src="http://webapi.amap.com/ui/1.0/main.js?v=1.0.11"></script>
+    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+    <script type="text/javascript">
+      var masterlist = [];
+      // 创建地图
+      var map = new AMap.Map('container', {
+        zoom: 4
+      });
+
+      /**
+       * 返回一批网格排列的经纬度
+       */
+
+      function dataHandler() {
+        var arr = allMarkers.map(item => item.masterName);
+        masterlist = [...new Set(arr)];
+        var masterHtml = '';
+        masterlist.forEach(m => {
+          masterHtml += '<li>' + m + '</li>';
+        });
+        document.querySelector('#master').innerHTML = masterHtml;
+        console.log(masterlist);
+      }
+
+      function getPointsByName(name) {
+        var arr = allMarkers.filter(item => item.masterName === name);
+        return arr;
+      }
+
+      $(function() {
+        dataHandler();
+
+        $('#master').click(function(e) {
+          var target = e.target;
+          var name = target.innerText;
+          clearClass();
+          $(target).addClass('active');
+          console.log(name, '有毒');
+          var points = getPointsByName(name);
+          console.log(masterlist);
+          var idx = masterlist.indexOf(name);
+          render(points, idx);
+        });
+      });
+
+      function clearClass() {
+        $('#master>li').each(function(index, e) {
+          $(e).removeClass('active');
+        });
+      }
+
+      function render(lngLats, idx) {
+        map.clearMap();
+        // 加载SimpleMarker
+        AMapUI.loadUI(['overlay/SimpleMarker'], function(SimpleMarker) {
+          var iconTheme = 'default';
+
+          // 内置的样式
+          var iconStyles = SimpleMarker.getBuiltInIconStyles(iconTheme);
+          console.log(iconStyles);
+          console.log(idx);
+          for (var i = 0, len = lngLats.length; i < len; i++) {
+            var masterName = lngLats[i]['masterName'];
+            var address = lngLats[i]['address'];
+            var points = lngLats[i]['lnglat'];
+            console.log(points);
+            new SimpleMarker({
+              iconTheme: iconTheme,
+              // 使用内置的iconStyle
+              iconStyle: getColor(iconStyles[idx]),
+
+              // 图标文字
+              iconLabel: {
+                // A,B,C.....
+                // innerHTML: masterName,
+                style: {
+                  // 颜色, #333, red等等，这里仅作示例，取iconStyle中首尾相对的颜色
+                  color: '#fff'
+                }
+              },
+
+              // 显示定位点
+              // showPositionPoint:true,
+
+              map: map,
+              position: [points[1], points[0]],
+
+              // Marker的label(见https://lbs.amap.com/api/javascript-api/reference/overlay/#Marker)
+              label: {
+                content: address,
+                offset: new AMap.Pixel(27, 25)
+              }
+            });
+          }
+          map.setFitView();
+        });
+      }
+
+      function getColor(c) {
+        if (c === 'green') return 'blue';
+        if (c === 'lightgreen') return 'green';
+        if (c === 'lightgray') return 'pink';
+        if (c === 'white') return 'black';
+        if (c === 'beige') return 'blue';
+        return c || 'red';
+      }
+    </script>
+  </body>
+</html>
