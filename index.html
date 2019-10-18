@@ -44,6 +44,11 @@
         border-radius: 10px 0 0 0;
         color: #690441;
       }
+      .check {
+        margin-left: 10px;
+        margin-top: 30px;
+        padding-left: 10px;
+      }
     </style>
     <script src="./data.js"></script>
   </head>
@@ -52,6 +57,10 @@
     <div class="main">
       <div class="list">
         <ul id="master"></ul>
+
+        <div class="check">
+          <input type="checkbox" onchange="allChanged(this)" /> 显示全部
+        </div>
       </div>
       <div id="container"></div>
     </div>
@@ -97,11 +106,10 @@
           var name = target.innerText;
           clearClass();
           $(target).addClass('active');
-          console.log(name, '有毒');
           var points = getPointsByName(name);
-          console.log(masterlist);
+          // console.log(masterlist);
           var idx = masterlist.indexOf(name);
-          render(points, idx);
+          render(points, idx, true);
         });
       });
 
@@ -111,22 +119,22 @@
         });
       }
 
-      function render(lngLats, idx) {
-        map.clearMap();
+      function render(lngLats, idx, isClearMap) {
+        if (isClearMap) {
+          map.clearMap();
+        }
         // 加载SimpleMarker
         AMapUI.loadUI(['overlay/SimpleMarker'], function(SimpleMarker) {
           var iconTheme = 'default';
 
           // 内置的样式
           var iconStyles = SimpleMarker.getBuiltInIconStyles(iconTheme);
-          console.log(iconStyles);
-          console.log(idx);
+          // console.log(iconStyles);
+          // console.log(idx);
           for (var i = 0, len = lngLats.length; i < len; i++) {
             var masterName = lngLats[i]['masterName'];
-            var address = lngLats[i]['address'];
             var points = lngLats[i]['lnglat'];
-            console.log(points);
-            new SimpleMarker({
+            var options = {
               iconTheme: iconTheme,
               // 使用内置的iconStyle
               iconStyle: getColor(iconStyles[idx]),
@@ -137,7 +145,8 @@
                 // innerHTML: masterName,
                 style: {
                   // 颜色, #333, red等等，这里仅作示例，取iconStyle中首尾相对的颜色
-                  color: '#fff'
+                  color: '#fff',
+                  fontSize: '10px'
                 }
               },
 
@@ -145,17 +154,27 @@
               // showPositionPoint:true,
 
               map: map,
-              position: [points[1], points[0]],
-
+              position: [points[1], points[0]]
+            };
+            if (isClearMap) {
+              var address = lngLats[i]['address'];
               // Marker的label(见https://lbs.amap.com/api/javascript-api/reference/overlay/#Marker)
-              label: {
+              options['label'] = {
                 content: address,
                 offset: new AMap.Pixel(27, 25)
-              }
-            });
+              };
+            } else {
+              options.iconLabel.innerHTML = masterName.substr(0, 2);
+            }
+            new SimpleMarker(options);
           }
           map.setFitView();
         });
+      }
+
+      function clearMap() {
+        map.clearMap();
+        clearClass();
       }
 
       function getColor(c) {
@@ -165,6 +184,18 @@
         if (c === 'white') return 'black';
         if (c === 'beige') return 'blue';
         return c || 'red';
+      }
+
+      function allChanged(e) {
+        var val = $(e).prop('checked');
+        if (val) {
+          clearMap();
+          for (var i = 0; i < masterlist.length; i++) {
+            var points = getPointsByName(masterlist[i]);
+            render(points, i, false);
+          }
+        }
+        clearMap();
       }
     </script>
   </body>
