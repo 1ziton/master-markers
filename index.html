@@ -1,11 +1,6 @@
-<!-- 重点参数：iconStyle, iconLabel -->
 <!DOCTYPE html>
 <html lang="zh-CN">
   <head>
-    <!-- 原始地址：http://webapi.amap.com/ui/1.0/ui/overlay/SimpleMarker/examples/index.html -->
-    <!-- <base
-      href="http://webapi.amap.com/ui/1.0/ui/overlay/SimpleMarker/examples/"
-    /> -->
     <meta charset="utf-8" />
     <meta
       http-equiv="Content-Security-Policy"
@@ -56,6 +51,7 @@
   <body>
     <div class="main">
       <div class="list">
+        <h3 style="margin-left: 20px;">师傅列表：</h3>
         <ul id="master"></ul>
 
         <div class="check">
@@ -87,7 +83,8 @@
       var masterlist = [];
       // 创建地图
       var map = new AMap.Map('container', {
-        zoom: 4
+        zoom: 5,
+        center: [116.397428, 39.90923]
       });
 
       /**
@@ -112,7 +109,10 @@
 
       $(function() {
         dataHandler();
-
+        $('#container').height(window.innerHeight);
+        $(window).on('resize', function() {
+          $('#container').height(window.innerHeight);
+        });
         $('#master').click(function(e) {
           var target = e.target;
           var name = target.innerText;
@@ -134,6 +134,7 @@
       function render(lngLats, idx, isClearMap) {
         if (isClearMap) {
           map.clearMap();
+          $('input[type=checkbox]').prop('checked', false);
         }
         // 加载SimpleMarker
         AMapUI.loadUI(['overlay/SimpleMarker'], function(SimpleMarker) {
