@@ -6,7 +6,7 @@ demo: http://1ziton.github.io/master-markers/
 
 ![](http://ww1.sinaimg.cn/large/940e68eegy1g82bw08q4kg20im0qbb2c.gif)
 
-## Useage
+## Usage
 
 github page的问题，`index.html` 加入了以下代码
 
