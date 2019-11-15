@@ -55,7 +55,8 @@
         <ul id="master"></ul>
 
         <div class="check">
-          <input type="checkbox" onchange="allChanged(this)" /> 显示全部
+          <input type="checkbox" id="checkedbox" onchange="allChanged(this)" />
+          显示全部
         </div>
       </div>
       <div id="container"></div>
@@ -86,7 +87,7 @@
         zoom: 5,
         center: [116.397428, 39.90923]
       });
-
+      map.setMapStyle('amap://styles/7fc84fcd90c5c82c989cfb8e4f6a11bc');
       /**
        * 返回一批网格排列的经纬度
        */
@@ -123,6 +124,7 @@
           var idx = masterlist.indexOf(name);
           render(points, idx, true);
         });
+        $('#checkedbox').click();
       });
 
       function clearClass() {
@@ -159,7 +161,7 @@
                 style: {
                   // 颜色, #333, red等等，这里仅作示例，取iconStyle中首尾相对的颜色
                   color: '#fff',
-                  fontSize: '10px'
+                  fontSize: '6px'
                 }
               },
 
@@ -170,10 +172,10 @@
               position: [points[1], points[0]]
             };
             if (isClearMap) {
-              var address = lngLats[i]['address'];
+              var masterName = lngLats[i]['masterName'];
               // Marker的label(见https://lbs.amap.com/api/javascript-api/reference/overlay/#Marker)
               options['label'] = {
-                content: address,
+                content: masterName,
                 offset: new AMap.Pixel(27, 25)
               };
             } else {
