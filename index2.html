@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src *; style-src 'self' http://* 'unsafe-inline'; script-src 'self' http://* 'unsafe-inline' 'unsafe-eval'"
+    />
+    <meta
+      name="viewport"
+      content="initial-scale=1.0, user-scalable=no, width=device-width"
+    />
+    <title>师傅分配订单打点</title>
+    <style>
+      html,
+      body,
+      #container {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+      }
+      .main {
+        display: flex;
+      }
+      .list {
+        width: 200px;
+      }
+      .data {
+        width: 500px;
+      }
+      li.active {
+        color: blue;
+      }
+      #container {
+        width: 100%;
+        height: 900px;
+      }
+      .amap-marker-label {
+        font-size: 13px;
+        border: 1px solid orange;
+        background: #fff;
+        border-radius: 10px 0 0 0;
+        color: #690441;
+      }
+      .check {
+        margin-left: 10px;
+        margin-top: 30px;
+        padding-left: 10px;
+      }
+    </style>
+    <script src="./data.js"></script>
+  </head>
+
+  <body>
+    <div class="main">
+      <div class="list">
+        <h3 style="margin-left: 20px;">师傅列表：</h3>
+        <ul id="master"></ul>
+
+        <div class="check">
+          <input type="checkbox" id="checkedbox" onchange="allChanged(this)" />
+          显示全部
+        </div>
+      </div>
+      <div id="container"></div>
+      <div class="data">
+        <a
+          href="https://github.com/1ziton/master-markers/issues/1"
+          style="display:block;margin-top:100px;margin-left: 10px"
+          target="_blank"
+          rel="noopener noreferrer"
+          >数据格式说明</a
+        >
+        <textarea
+          id="textarea"
+          rows="50"
+          cols="20"
+          style="width:95%;margin-top:80px;"
+          placeholder="请填入数组格式的数组"
+        >
+        </textarea>
+        <button id="converbtn">提交数据</button>
+        <br />
+        <br />
+        <span
+          style="display:inline-block;font-size: 11px;width: 100%;white-space: nowrap;"
+        >
+          <input type="checkbox" id="lnglatCheckbox" />
+          经纬度相反转换，经度在左（如： "lnglat": "121.384598,31.172588" ）
+        </span>
+      </div>
+      <a
+        href="https://github.com/1ziton/master-markers"
+        style="position: absolute;top: 0;right: 0;"
+        target="_blank"
+        ><img
+          width="149"
+          height="149"
+          src="https://github.blog/wp-content/uploads/2008/12/forkme_right_red_aa0000.png?resize=149%2C149"
+          class="attachment-full size-full"
+          alt="Fork me on GitHub"
+          data-recalc-dims="1"
+      /></a>
+    </div>
+    <script
+      type="text/javascript"
+      src="http://webapi.amap.com/maps?v=1.4.15&key=146f101e824accd6956eeec4937c1a05"
+    ></script>
+    <!-- UI组件库 1.0 -->
+    <script src="http://webapi.amap.com/ui/1.0/main.js?v=1.0.11"></script>
+    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+    <script type="text/javascript">
+      var masterlist = [];
+      // 创建地图
+      var map = new AMap.Map('container', {
+        zoom: 5,
+        center: [116.397428, 39.90923]
+      });
+      map.setMapStyle('amap://styles/7fc84fcd90c5c82c989cfb8e4f6a11bc');
+      /**
+       * 返回一批网格排列的经纬度
+       * isLngLat 经纬度相反处理
+       */
+
+      function dataHandler(isLngLat) {
+        allMarkers = allMarkers.map(item => {
+          if (typeof item.lnglat === 'string') {
+            item.lnglat = item.lnglat.split(',').map(str => +str);
+            if (isLngLat) {
+              item.lnglat = [item.lnglat[1], item.lnglat[0]];
+            }
+          }
+          return item;
+        });
+
+        var arr = allMarkers.map(item => item.masterName);
+        masterlist = [...new Set(arr)];
+        var masterHtml = '';
+        masterlist.forEach(m => {
+          masterHtml += '<li>' + m + '</li>';
+        });
+        document.querySelector('#master').innerHTML = masterHtml;
+        console.log(masterlist);
+      }
+
+      function getPointsByName(name) {
+        var arr = allMarkers.filter(item => item.masterName === name);
+        return arr;
+      }
+
+      $(function() {
+        $('#textarea').val('');
+        dataHandler();
+        $('#container').height(window.innerHeight);
+        $(window).on('resize', function() {
+          $('#container').height(window.innerHeight);
+        });
+        $('#master').click(function(e) {
+          var target = e.target;
+          var name = target.innerText;
+          clearClass();
+          $(target).addClass('active');
+          var points = getPointsByName(name);
+          // console.log(masterlist);
+          var idx = masterlist.indexOf(name);
+          render(points, idx, true);
+        });
+        $('#checkedbox').click();
+
+        $('#converbtn').click(function(e) {
+          var text = $('#textarea').val();
+          try {
+            var data = eval(text.trim());
+            allMarkers = data;
+            dataHandler($('#lnglatCheckbox').prop('checked'));
+            $('#checkedbox').prop('checked', false);
+            console.log(data);
+            setTimeout(function() {
+              $('#checkedbox').click();
+            });
+          } catch (e) {
+            console.log(e);
+            alert('输入的数据格式不正确，非指定的数组字符串格式');
+          }
+        });
+      });
+
+      function clearClass() {
+        $('#master>li').each(function(index, e) {
+          $(e).removeClass('active');
+        });
+      }
+
+      function render(lngLats, idx, isClearMap) {
+        if (isClearMap) {
+          map.clearMap();
+          $('#checkedbox').prop('checked', false);
+        }
+        // 加载SimpleMarker
+        AMapUI.loadUI(['overlay/SimpleMarker'], function(SimpleMarker) {
+          var iconTheme = 'default';
+
+          // 内置的样式
+          var iconStyles = SimpleMarker.getBuiltInIconStyles(iconTheme);
+          // console.log(iconStyles);
+          // console.log(idx);
+          for (var i = 0, len = lngLats.length; i < len; i++) {
+            var masterName = lngLats[i]['masterName'];
+            var points = lngLats[i]['lnglat'];
+            var options = {
+              iconTheme: iconTheme,
+              // 使用内置的iconStyle
+              iconStyle: getColor(iconStyles[idx]),
+
+              // 图标文字
+              iconLabel: {
+                // A,B,C.....
+                // innerHTML: masterName,
+                style: {
+                  // 颜色, #333, red等等，这里仅作示例，取iconStyle中首尾相对的颜色
+                  color: '#fff',
+                  fontSize: '6px'
+                }
+              },
+
+              // 显示定位点
+              // showPositionPoint:true,
+
+              map: map,
+              position: [points[1], points[0]]
+            };
+            if (isClearMap) {
+              var masterName = lngLats[i]['masterName'];
+              // Marker的label(见https://lbs.amap.com/api/javascript-api/reference/overlay/#Marker)
+              options['label'] = {
+                content: masterName,
+                offset: new AMap.Pixel(27, 25)
+              };
+            } else {
+              options.iconLabel.innerHTML = masterName.substr(0, 2);
+            }
+            new SimpleMarker(options);
+          }
+          map.setFitView();
+        });
+      }
+
+      function clearMap() {
+        map.clearMap();
+        clearClass();
+      }
+
+      function getColor(c) {
+        if (c === 'green') return 'blue';
+        if (c === 'lightgreen') return 'green';
+        if (c === 'lightgray') return 'pink';
+        if (c === 'white') return 'black';
+        if (c === 'beige') return 'blue';
+        return c || 'red';
+      }
+
+      function allChanged(e) {
+        var val = $(e).prop('checked');
+        if (val) {
+          clearMap();
+          for (var i = 0; i < masterlist.length; i++) {
+            var points = getPointsByName(masterlist[i]);
+            render(points, i, false);
+          }
+        }
+        clearMap();
+      }
+    </script>
+  </body>
+</html>
