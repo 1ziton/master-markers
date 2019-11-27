@@ -25,6 +25,9 @@
       .list {
         width: 200px;
       }
+      .data {
+        width: 500px;
+      }
       li.active {
         color: blue;
       }
@@ -60,6 +63,32 @@
         </div>
       </div>
       <div id="container"></div>
+      <div class="data">
+        <a
+          href="https://github.com/1ziton/master-markers/issues/1"
+          style="display:block;margin-top:100px;margin-left: 10px"
+          target="_blank"
+          rel="noopener noreferrer"
+          >数据格式说明</a
+        >
+        <textarea
+          id="textarea"
+          rows="50"
+          cols="20"
+          style="width:95%;margin-top:80px;"
+          placeholder="请填入数组格式的数组"
+        >
+        </textarea>
+        <button id="converbtn">提交数据</button>
+        <br />
+        <br />
+        <span
+          style="display:inline-block;font-size: 11px;width: 100%;white-space: nowrap;"
+        >
+          <input type="checkbox" id="lnglatCheckbox" />
+          经纬度相反转换，经度在左（如： "lnglat": "121.384598,31.172588" ）
+        </span>
+      </div>
       <a
         href="https://github.com/1ziton/master-markers"
         style="position: absolute;top: 0;right: 0;"
@@ -90,9 +119,20 @@
       map.setMapStyle('amap://styles/7fc84fcd90c5c82c989cfb8e4f6a11bc');
       /**
        * 返回一批网格排列的经纬度
+       * isLngLat 经纬度相反处理
        */
 
-      function dataHandler() {
+      function dataHandler(isLngLat) {
+        allMarkers = allMarkers.map(item => {
+          if (typeof item.lnglat === 'string') {
+            item.lnglat = item.lnglat.split(',').map(str => +str);
+            if (isLngLat) {
+              item.lnglat = [item.lnglat[1], item.lnglat[0]];
+            }
+          }
+          return item;
+        });
+
         var arr = allMarkers.map(item => item.masterName);
         masterlist = [...new Set(arr)];
         var masterHtml = '';
@@ -109,6 +149,7 @@
       }
 
       $(function() {
+        $('#textarea').val('');
         dataHandler();
         $('#container').height(window.innerHeight);
         $(window).on('resize', function() {
@@ -125,6 +166,23 @@
           render(points, idx, true);
         });
         $('#checkedbox').click();
+
+        $('#converbtn').click(function(e) {
+          var text = $('#textarea').val();
+          try {
+            var data = eval(text.trim());
+            allMarkers = data;
+            dataHandler($('#lnglatCheckbox').prop('checked'));
+            $('#checkedbox').prop('checked', false);
+            console.log(data);
+            setTimeout(function() {
+              $('#checkedbox').click();
+            });
+          } catch (e) {
+            console.log(e);
+            alert('输入的数据格式不正确，非指定的数组字符串格式');
+          }
+        });
       });
 
       function clearClass() {
@@ -136,7 +194,7 @@
       function render(lngLats, idx, isClearMap) {
         if (isClearMap) {
           map.clearMap();
-          $('input[type=checkbox]').prop('checked', false);
+          $('#checkedbox').prop('checked', false);
         }
         // 加载SimpleMarker
         AMapUI.loadUI(['overlay/SimpleMarker'], function(SimpleMarker) {
